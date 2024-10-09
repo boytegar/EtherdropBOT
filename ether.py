@@ -147,4 +147,17 @@ class Ether:
             data = response.json()
             print_(f"Claim Task {name} : {data.get('status','')}")
 
+    def claim_ref(self, token):
+        print_('Claim Reff Reward')
+        url = 'https://api.miniapp.dropstab.com/api/refLink/claim'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('put',url, headers=headers)
+        if response is not None:
+            data = response.json()
+            totalReward = data.get('totalReward',0)
+            print_(f"Reff claim Done, Reward : {totalReward}")
+
     
