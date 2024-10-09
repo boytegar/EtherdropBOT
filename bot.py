@@ -67,6 +67,7 @@ def main():
                 print_(f"TGID : {user_info.get('tgId','')} | Username : {user_info.get('tgUsername','None')} | Balance : {user_info.get('balance',0)}")
                 ether.daily_bonus(token)
                 ether.check_tasks(token)
+                ether.claim_ref(token)
         end_time = time.time()
         total = delay - (end_time-start_time)
         print_delay(total)

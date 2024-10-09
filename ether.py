@@ -154,7 +154,7 @@ class Ether:
             **self.header,
             'authorization': f"Bearer {token}"
         }
-        response = make_request('put',url, headers=headers)
+        response = make_request('post',url, headers=headers)
         if response is not None:
             data = response.json()
             totalReward = data.get('totalReward',0)
