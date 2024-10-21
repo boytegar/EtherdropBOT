@@ -52,9 +52,11 @@ def print_delay(delay):
     print_("\nWaiting Done, Starting....\n")
        
 def main():
+    input_coin = input("random choice coin y/n (BTC default)  : ").strip().lower()
+    input_order = input("open order l(long), s(short), r(random)  : ").strip().lower()
     while True:
         start_time = time.time()
-        delay = 8*3600
+        delay = 4*3700
         clear_terminal()
         queries = load_query()
         sum = len(queries)
@@ -66,8 +68,42 @@ def main():
                 user_info = ether.get_user_info(token)
                 print_(f"TGID : {user_info.get('tgId','')} | Username : {user_info.get('tgUsername','None')} | Balance : {user_info.get('balance',0)}")
                 ether.daily_bonus(token)
-                ether.check_tasks(token)
                 ether.claim_ref(token)
+                data_order = ether.get_order(token)
+                if data_order is not None:
+                    totalScore = data_order.get('totalScore',0)
+                    results = data_order.get('results',{})
+                    print_(f"Result Game : {results.get('orders',0)} Order | {results.get('wins',0)} Wins | {results.get('loses',0)} Loses | {results.get('winRate',0.0)} Winrate")
+                    list_periods = data_order.get('periods',[])
+                    detail_coin = ether.get_coins(token, input_order)
+                    for list in list_periods:
+                        period = list.get('period',{})
+                        unlockThreshold = period.get('unlockThreshold',0)
+                        detail_order = list.get('order',{})
+                        id = period.get('id',1)
+                        if totalScore >= unlockThreshold:
+                            status = [True, False]
+                            if input_coin =='y':
+                                coins = random.choice(detail_coin)
+                            else:
+                                coins = detail_coin[0]
+
+                            if input_order == 'l':
+                                status_order = status[1]
+                            elif input_order == 's':
+                                status_order = status[0]
+                            else:
+                                status_order = random.choice(status)
+                            if detail_order is None:
+                                coin_id = coins.get('id')
+                                payload = {'coinId': coin_id, 'short': status_order, 'periodId': id}
+                                ether.post_order(token=token, payload=payload)
+                        
+                ether.check_tasks(token)                
+
+
+
+
         end_time = time.time()
         total = delay - (end_time-start_time)
         print_delay(total)

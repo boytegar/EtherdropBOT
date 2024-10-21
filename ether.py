@@ -1,3 +1,4 @@
+import random
 import requests
 import json
 import time
@@ -159,5 +160,60 @@ class Ether:
             data = response.json()
             totalReward = data.get('totalReward',0)
             print_(f"Reff claim Done, Reward : {totalReward}")
+
+    def get_order(self, token):
+        url = 'https://api.miniapp.dropstab.com/api/order'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('get',url, headers=headers)
+        if response is not None:
+            data = response.json()
+            return data
+    
+    def get_coins(self,token, randoms):
+        url = 'https://api.miniapp.dropstab.com/api/order/coins'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('get',url, headers=headers)
+        if response is not None:
+            data = response.json()
+            return data
+    
+    def get_detail_coin(self, token, id):
+        url = f'https://api.miniapp.dropstab.com/api/order/coinStats/{id}'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('get',url, headers=headers)
+        if response is not None:
+            data = response.json()
+            return data
+    
+    def post_order(self, token, payload):
+        url = 'https://api.miniapp.dropstab.com/api/order'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('post',url, headers=headers, json=payload)
+        if response is not None:
+            data = response.json()
+            list_periods = data.get('periods',[])
+            for data in list_periods:
+                period = data.get('period',[])
+                hours = period.get('hours')
+                order = data.get('order',{})
+                if len(order) > 0:
+                    shorts = "Long"
+                    if order.get('short'):
+                        shorts = "Short"
+                    coin = order.get('coin')
+                    print_(f"Open {shorts} in {coin.get('symbol')} at Price {coin.get('price')} time {hours} Hours")
+                    break
 
     
