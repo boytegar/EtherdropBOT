@@ -119,10 +119,14 @@ class Ether:
                         name = quest.get('name','')
                         reward = quest.get('reward',0)
                         print_(f"Checking task {name} | Reward {reward}")
-                        if claimAllowed:
-                            self.claim_task(token, quest["id"], name)
+                        status = quest.get('status')
+                        if status == "COMPLETED":
+                            print_(f"Task {name} is completed")
                         else:
-                            self.verify_task(token, quest["id"], name)
+                            if claimAllowed:
+                                self.claim_task(token, quest["id"], name)
+                            else:
+                                self.verify_task(token, quest["id"], name)
         except Exception as e:
             print_(f"Error Detail : {e}")
 
@@ -216,4 +220,28 @@ class Ether:
                     print_(f"Open {shorts} in {coin.get('symbol')} at Price {coin.get('price')} time {hours} Hours")
                     break
 
+    def claim_order(self, token, order):
+        id = order.get('id')
+        url = f'https://api.miniapp.dropstab.com/api/order/{id}/claim'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('put',url, headers=headers)
+        if response is not None:
+            data = response.json()
+            print_(f"Success Predict Coin : {order.get('coin').get('symbol')} | Reward : {order.get('reward')} | Predict Success : {order.get('result')}")
+            return data
     
+    def mark_checked(self, token, order):
+        id = order.get('id')
+        url = f'https://api.miniapp.dropstab.com/api/order/{id}/markUserChecked'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('put',url, headers=headers)
+        if response is not None:
+            data = response.json()
+            print_(f"Failed Predict Coin : {order.get('coin').get('symbol')} | Reward : {order.get('reward')} | Predict Success : {order.get('result')}")
+            return data

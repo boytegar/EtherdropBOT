@@ -50,13 +50,14 @@ def print_delay(delay):
         time.sleep(1)
         delay -= 1
     print_("\nWaiting Done, Starting....\n")
-       
+
+
 def main():
     input_coin = input("random choice coin y/n (BTC default)  : ").strip().lower()
     input_order = input("open order l(long), s(short), r(random)  : ").strip().lower()
     while True:
         start_time = time.time()
-        delay = 4*3700
+        delay = 2*3700
         clear_terminal()
         queries = load_query()
         sum = len(queries)
@@ -81,13 +82,49 @@ def main():
                         unlockThreshold = period.get('unlockThreshold',0)
                         detail_order = list.get('order',{})
                         id = period.get('id',1)
+                        if detail_order is not None:
+                            statusss = detail_order.get('status','')
+                            if statusss == "CLAIM_AVAILABLE":
+                                data_claim = ether.claim_order(token=token, order=detail_order)
+                                if data_claim is not None:
+                                    status = [True, False]
+                                    if input_coin =='y':
+                                        coins = random.choice(detail_coin)
+                                    else:
+                                        coins = detail_coin[0]
+                                    if input_order == 'l':
+                                        status_order = status[1]
+                                    elif input_order == 's':
+                                        status_order = status[0]
+                                    else:
+                                        status_order = random.choice(status)
+                                        coin_id = coins.get('id')
+                                        payload = {'coinId': coin_id, 'short': status_order, 'periodId': id}
+                                        ether.post_order(token=token, payload=payload)
+                            elif statusss == "NOT_WIN":
+                                data_check = ether.mark_checked(token=token, order=detail_order)
+                                if data_check is not None:
+                                    status = [True, False]
+                                    if input_coin =='y':
+                                        coins = random.choice(detail_coin)
+                                    else:
+                                        coins = detail_coin[0]
+                                    if input_order == 'l':
+                                        status_order = status[1]
+                                    elif input_order == 's':
+                                        status_order = status[0]
+                                    else:
+                                        status_order = random.choice(status)
+                                        coin_id = coins.get('id')
+                                        payload = {'coinId': coin_id, 'short': status_order, 'periodId': id}
+                                        ether.post_order(token=token, payload=payload)
+                        
                         if totalScore >= unlockThreshold:
                             status = [True, False]
                             if input_coin =='y':
                                 coins = random.choice(detail_coin)
                             else:
                                 coins = detail_coin[0]
-
                             if input_order == 'l':
                                 status_order = status[1]
                             elif input_order == 's':
