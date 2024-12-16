@@ -1,5 +1,3 @@
-
-
 import base64
 import json
 import os
@@ -57,17 +55,25 @@ def main():
     input_order = input("open order l(long), s(short), r(random)  : ").strip().lower()
     while True:
         start_time = time.time()
-        delay = 2*3700
+        delay = 1*3700
         clear_terminal()
         queries = load_query()
         sum = len(queries)
         ether = Ether()
         for index, query in enumerate(queries, start=1):
             print_(f"SxG========= Account {index}/{sum} =========SxG")
-            token = ether.get_token(query)
-            if token is not None:
+            data_login = ether.login(query)
+            if data_login is not None:
+                token = data_login["jwt"]["access"]["token"]
+                user = data_login.get('user')
+                usedRefLinkCode = user.get('usedRefLinkCode',None)
+                welcomeBonusReceived = user.get('welcomeBonusReceived',False)
                 user_info = ether.get_user_info(token)
                 print_(f"TGID : {user_info.get('tgId','')} | Username : {user_info.get('tgUsername','None')} | Balance : {user_info.get('balance',0)}")
+                if usedRefLinkCode is None:
+                    ether.user_reff(token)
+                if welcomeBonusReceived == False:
+                    ether.welcome_bonus(token)
                 ether.daily_bonus(token)
                 ether.claim_ref(token)
                 data_order = ether.get_order(token)
@@ -80,7 +86,7 @@ def main():
                     for list in list_periods:
                         period = list.get('period',{})
                         unlockThreshold = period.get('unlockThreshold',0)
-                        detail_order = list.get('order',{})
+                        detail_order = list.get('order',None)
                         id = period.get('id',1)
                         if detail_order is not None:
                             statusss = detail_order.get('status','')
@@ -143,6 +149,7 @@ def main():
 
         end_time = time.time()
         total = delay - (end_time-start_time)
-        print_delay(total)
+        if total > 0:
+            print_delay(total)
 if __name__ == "__main__":
      main()

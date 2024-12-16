@@ -53,9 +53,8 @@ class Ether:
             "Referrer-Policy": "strict-origin-when-cross-origin"
         }
 
-    def get_token(self, query):
+    def login(self, query):
         url = "https://api.miniapp.dropstab.com/api/auth/login"
-        #https://api.miniapp.dropstab.com/api/auth/refresh
         headers = self.header
         payload = {"webAppData": query}
         print_("Generate Token....")
@@ -63,8 +62,7 @@ class Ether:
             response = make_request('post', url, headers=headers, json=payload)
             if response is not None:
                 data = response.json()
-                token = data["jwt"]["access"]["token"]
-                return token
+                return data
         except Exception as e:
             print_(f"Error Detail : {e}")
 
@@ -119,6 +117,18 @@ class Ether:
                         name = quest.get('name','')
                         reward = quest.get('reward',0)
                         print_(f"Checking task {name} | Reward {reward}")
+                        if 'channel' in name.lower():
+                            print_(f"Task {name} Skipped")
+                            continue
+                        if 'invite' in name.lower():
+                            print_(f"Task {name} Skipped")
+                            continue
+                        if 'in minigame' in name.lower():
+                            print_(f"Task {name} Skipped")
+                            continue
+                        if 'linked' in name.lower():
+                            print_(f"Task {name} Skipped")
+                            continue
                         status = quest.get('status')
                         if status == "COMPLETED":
                             print_(f"Task {name} is completed")
@@ -211,14 +221,13 @@ class Ether:
             for data in list_periods:
                 period = data.get('period',[])
                 hours = period.get('hours')
-                order = data.get('order',{})
-                if len(order) > 0:
+                order = data.get('order',None)
+                if order is not None:
                     shorts = "Long"
                     if order.get('short'):
                         shorts = "Short"
                     coin = order.get('coin')
                     print_(f"Open {shorts} in {coin.get('symbol')} at Price {coin.get('price')} time {hours} Hours")
-                    break
 
     def claim_order(self, token, order):
         id = order.get('id')
@@ -244,4 +253,32 @@ class Ether:
         if response is not None:
             data = response.json()
             print_(f"Failed Predict Coin : {order.get('coin').get('symbol')} | Reward : {order.get('reward')} | Predict Success : {order.get('result')}")
+            return data
+
+    def user_reff(self, token):
+        url = 'https://api.miniapp.dropstab.com/api/user/applyRefLink'
+        payload = {"code":"OQITG"}
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('put', url, headers=headers, json=payload)
+        if response is not None:
+            data = response.json()
+            usedRefLinkCode = data.get('usedRefLinkCode')
+            print_(f"Register Done")
+            return data
+    
+    def welcome_bonus(self, token):
+        url = 'https://api.miniapp.dropstab.com/api/bonus/welcomeBonus'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('post', url, headers=headers)
+        if response is not None:
+            data = response.json()
+            result = data.get('result')
+            if result:
+                print_(f"Welcome Bonus : {data.get('bonus')}")
             return data
