@@ -29,6 +29,10 @@ def load_query():
         print("Failed get Query :", str(e))
         return [  ]
 
+def load_address():
+    with open('ton_address.txt', 'r') as f:
+        address = [line.strip() for line in f.readlines()]
+    return address
 
 def parse_query(query: str):
     parsed_query = parse_qs(query)
@@ -151,5 +155,51 @@ def main():
         total = delay - (end_time-start_time)
         if total > 0:
             print_delay(total)
+
+
+def connect():
+    queries = load_query()
+    addresses = load_address()
+    sum = len(queries)
+    dres = len(addresses)
+    ether = Ether()
+    for index, query in enumerate(queries):
+        print_(f"SxG========= Account {index+1}/{sum} =========SxG")
+        data_login = ether.login(query)
+        if data_login is not None:
+            token = data_login["jwt"]["access"]["token"]
+            user = data_login.get('user')
+            usedRefLinkCode = user.get('usedRefLinkCode',None)
+            welcomeBonusReceived = user.get('welcomeBonusReceived',False)
+            user_info = ether.get_user_info(token)
+            tonWallet = user_info.get('tonWallet', None)
+            tgUsername = user_info.get('tgUsername', '')
+            print_(f"Username : {tgUsername}")
+            if tonWallet is None:
+                if index > dres:
+                    print_(f"Address account {index+1} is not found")
+                    continue
+                else:
+                    address = addresses[index]
+                    payload = {"tonWallet":address}
+                    ether.connect_wallet(token, payload)
+            else:
+                print_(f"Ton wallet address: {tonWallet}")
+
+def start():
+    print("""
+    ETHERDROP BOT
+          
+    1. daily claim
+    2. connect ton wallet
+
+""")
+    choice = input("Enter your choice: ")
+    if choice == '1':
+        main()
+    elif choice == '2':
+        connect()
+    else:
+        print("Choice not found")
 if __name__ == "__main__":
-     main()
+     start()

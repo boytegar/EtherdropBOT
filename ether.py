@@ -12,29 +12,51 @@ def print_(word):
 
 def make_request(method, url, headers, json=None, data=None):
     retry_count = 0
+    max_retries = 4  # Maximum number of retries for connection errors
+    retry_delay = 2  # Delay between retries in seconds
+
     while True:
-        time.sleep(2)
-        if method.upper() == "GET":
-            response = requests.get(url, headers=headers, json=json)
-        elif method.upper() == "POST":
-            response = requests.post(url, headers=headers, json=json, data=data)
-        elif method.upper() == "PUT":
-            response = requests.put(url, headers=headers, json=json, data=data)
-        else:
-            raise ValueError("Invalid method.")
-        
-        if response.status_code >= 500:
-            if retry_count >= 4:
-                print_(f"Status Code: {response.status_code} | {response.text}")
+        try:
+            # Sleep before making the request
+            time.sleep(retry_delay)
+            # Make the request based on the method
+            if method.upper() == "GET":
+                response = requests.get(url, headers=headers, json=json)
+            elif method.upper() == "POST":
+                response = requests.post(url, headers=headers, json=json, data=data)
+            elif method.upper() == "PUT":
+                response = requests.put(url, headers=headers, json=json, data=data)
+            else:
+                raise ValueError("Invalid method.")
+
+            # Check for server errors (5xx)
+            if response.status_code >= 500:
+                if retry_count >= max_retries:
+                    print(f"Status Code: {response.status_code} | {response.text}")
+                    return None
+                retry_count += 1
+                print(f"Server error (status code: {response.status_code}). Retrying... ({retry_count}/{max_retries})")
+                continue  # Retry the request
+
+            # Check for client errors (4xx)
+            elif response.status_code >= 400:
+                print(f"Client error (status code: {response.status_code}) | {response.text}")
                 return None
-            retry_count += 1
-            return None
-        elif response.status_code >= 400:
-            print_(f"Status Code: {response.status_code} | {response.text}")
-            return None
-        elif response.status_code >= 200:
+
+            # Successful response (2xx)
             return response
 
+        except ConnectionError as e:
+            if retry_count >= max_retries:
+                print(f"Connection error occurred: {e}. Max retries reached. Exiting.")
+                return None
+            retry_count += 1
+            print(f"Connection error occurred: {e}. Retrying... ({retry_count}/{max_retries})")
+            continue 
+
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
 class Ether:
 
     def __init__(self):
@@ -281,4 +303,18 @@ class Ether:
             result = data.get('result')
             if result:
                 print_(f"Welcome Bonus : {data.get('bonus')}")
+            return data
+    
+    def connect_wallet(self, token, payload):
+        url = 'https://api.miniapp.dropstab.com/api/user/tonWallet'
+        headers = {
+            **self.header,
+            'authorization': f"Bearer {token}"
+        }
+        response = make_request('put', url, headers=headers, json=payload)
+        if response is not None:
+            data = response.json()
+            tonWallet = data.get('tonWallet')
+            balance = data.get('balance')
+            print_(f"Connect wallet done, Balance : {balance} | Address : {tonWallet}")
             return data
